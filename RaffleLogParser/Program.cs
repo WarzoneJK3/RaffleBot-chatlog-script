@@ -80,7 +80,8 @@ void processStreaksPerRaffle(bool exportToCsv)
         {
             Raffle raffle = raffles[index];
             int streak = streaks[index];
-            sb.AppendLine($"\"{raffle.WinnerName}\",\"{raffle.Coins}\",\"{streak}\",\"{raffle.EndTime:s}\",\"{raffle.AdditionalReward}\",\"{raffle.HasWinner}\"");
+            string cleanWinnerName = raffle.WinnerName?.Replace("\"", "\"\"") ?? string.Empty;
+            sb.AppendLine($"\"{cleanWinnerName}\",\"{raffle.Coins}\",\"{streak}\",\"{raffle.EndTime:s}\",\"{raffle.AdditionalReward}\",\"{raffle.HasWinner}\"");
         }
 
         File.WriteAllText(BinPathToFileDirectory + @"Files\RaffleData.csv", sb.ToString());
@@ -131,7 +132,8 @@ void processStreaksPerPlayer(bool exportToCsv)
         foreach ((string playerName, Player player) in Player.Players)
         {
             int streak = streakPerPlayer[playerName];
-            sb.AppendLine($"\"{playerName}\",\"{streak}\",\"{player.RafflesWon}\",\"{player.RafflesJoined}\",\"{player.RafflesWonExpected}\",\"{player.CoinsWon}\",\"{player.CoinsExpected}\"");
+            string cleanPlayerName = playerName.Replace("\"","\"\"");
+            sb.AppendLine($"\"{cleanPlayerName}\",\"{streak}\",\"{player.RafflesWon}\",\"{player.RafflesJoined}\",\"{player.RafflesWonExpected}\",\"{player.CoinsWon}\",\"{player.CoinsExpected}\"");
         }
 
         File.WriteAllText(BinPathToFileDirectory + @"Files\PlayerData.csv", sb.ToString());
