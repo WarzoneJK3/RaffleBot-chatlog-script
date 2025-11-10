@@ -1,4 +1,5 @@
 ﻿using RaffleLogParser.Enums;
+using System.Reflection.Metadata;
 
 namespace RaffleLogParser;
 
@@ -12,6 +13,7 @@ public class Raffle
     public RaffleVariety Variety { get; }
     public DateTime StartTime { get; }
 
+    public bool HasEnded { get; private set; }
     public bool HasWinner { get; private set; }
     public DateTime EndTime { get; private set; }
     public RaffleVariety? NextRaffleVariety { get; private set; }
@@ -27,8 +29,6 @@ public class Raffle
     public TimeSpan Duration { get; private set; }
     public List<string>? PlayerNames { get; private set; }
     public double WinChancePerJoinedPlayer { get; private set; }
-
-    private bool _hasEnded;
     
     public Raffle(int coins, AdditionalRewardType additionalReward, RaffleVariety variety, DateTime startTime)
     {
@@ -45,9 +45,16 @@ public class Raffle
 
     public void AddEntry(RaffleEntryMessage entry)
     {
-        if (_hasEnded)
+        if (HasEnded)
         {
-            throw new InvalidOperationException("Cannot add new entry messages to a finished raffle");
+            // Sometimes there is a situation where the last entry in the raffle gets logged during or after the fact
+            TimeSpan difference = entry.TimeStamp - EndTime;
+            if (difference.Duration() > TimeSpan.FromSeconds(1))
+            {
+                throw new InvalidOperationException("Cannot add new entry messages to a finished raffle");
+            }
+
+            UpdateEntryBasedProperties();
         }
 
         Entries.Add(entry);
@@ -67,21 +74,13 @@ public class Raffle
         WinnerName = endMessage.Winner.TakeFirst(Constants.MaxLengthPlayerNameInRaffleMessage);
 
         Duration = EndTime - StartTime;
-        
-        List<RaffleEntryMessage> players = Entries.DistinctBy(e => e.PlayerName).ToList();
-        PlayerNames = players.Select(p => p.PlayerName).ToList();
-        NumberOfPlayers = players.Count;
-        NumberOfPlayersFailed = players.Count(x => !x.Success);
-        NumberOfPlayersJoined = players.Count(x => x.Success);
-        WinChancePerJoinedPlayer = 1.0 / NumberOfPlayersJoined;
-        WasSniped = HasWinner && players.All(p => EndTime - p.TimeStamp <= SnipedTimeSpan);
-
-        _hasEnded = true;
+        UpdateEntryBasedProperties();
+        HasEnded = true;
     }
 
     public void AddFact(RaffleFactMessage factMessage)
     {
-        if (!_hasEnded)
+        if (!HasEnded)
         {
             throw new InvalidOperationException("Cannot add facts to an unfinished raffle");
         }
@@ -91,7 +90,7 @@ public class Raffle
 
     public void AddFact(RaffleFactExtensionMessage factExtensionMessage)
     {
-        if (!_hasEnded)
+        if (!HasEnded)
         {
             throw new InvalidOperationException("Cannot add facts to an unfinished raffle");
         }
@@ -102,5 +101,16 @@ public class Raffle
         }
 
         Fact = factExtensionMessage.FullFactMessage;
+    }
+
+    private void UpdateEntryBasedProperties()
+    {
+        List<RaffleEntryMessage> players = Entries.DistinctBy(e => e.PlayerName).ToList();
+        PlayerNames = players.Select(p => p.PlayerName).ToList();
+        NumberOfPlayers = players.Count;
+        NumberOfPlayersFailed = players.Count(x => !x.Success);
+        NumberOfPlayersJoined = players.Count(x => x.Success);
+        WinChancePerJoinedPlayer = 1.0 / NumberOfPlayersJoined;
+        WasSniped = HasWinner && players.All(p => EndTime - p.TimeStamp <= SnipedTimeSpan);
     }
 }
