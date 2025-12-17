@@ -1,13 +1,19 @@
 ﻿using System.Diagnostics;
+using System.Text;
 
 namespace RaffleLogParser;
 
-public static class RaffleLogFileParser
+public class RaffleLogFile
 {
-    public static readonly List<Raffle> Raffles = new();
-    public static readonly List<RaffleMessage> RaffleMessages = new();
+    public readonly List<Raffle> Raffles = new();
+    public readonly List<RaffleMessage> RaffleMessages = new();
 
-    public static void ParseFile(string path)
+    public RaffleLogFile(string filename)
+    {
+        ParseFile(filename);
+    }
+
+    private void ParseFile(string path)
     {
         Stopwatch timer = Stopwatch.StartNew();
         
@@ -65,7 +71,7 @@ public static class RaffleLogFileParser
         Console.WriteLine($"Took {timer.Elapsed} to process {Raffles.Count} raffles and {Player.Players.Count} players");
     }
 
-    public static IEnumerable<Raffle> GetRaffles(DateTime afterDateTime, DateTime? beforeDateTime = null)
+    public IEnumerable<Raffle> GetRaffles(DateTime afterDateTime, DateTime? beforeDateTime = null)
     {
         if (beforeDateTime == null)
         {
@@ -73,5 +79,19 @@ public static class RaffleLogFileParser
         }
 
         return Raffles.Where(r => r.EndTime >= afterDateTime && r.EndTime <= beforeDateTime);
+    }
+
+    public void WriteRafflesToCsv(string filePath)
+    {
+        StringBuilder sb = new StringBuilder(Raffles.Count * 200);
+        sb.AppendLine("sep=,");
+        sb.AppendLine("Coins,AdditionalReward,Variety,StartTime,HasEnded,HasWinner,EndTime,NextRaffleVariety,WinnerName,WasSniped,Fact,NumberOfPlayers,NumberOfPlayersJoined,NumberOfPlayersFailed,Duration,WinChancePerJoinedPlayer");
+        
+        foreach (Raffle r in Raffles) 
+        {
+            sb.AppendLine(Utility.BuildCsvString(r.Coins, r.AdditionalReward, r.Variety, r.StartTime, r.HasEnded, r.HasWinner, r.EndTime, r.NextRaffleVariety, r.WinnerName, r.WasSniped, r.NumberOfPlayers, r.NumberOfPlayersJoined, r.NumberOfPlayersFailed, r.Duration, r.WinChancePerJoinedPlayer));
+        }
+
+        File.WriteAllText(filePath, sb.ToString());
     }
 }

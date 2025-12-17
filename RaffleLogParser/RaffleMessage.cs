@@ -17,6 +17,7 @@ public class RaffleMessage
     public static RaffleMessage ParseLine(string lineText, RaffleMessage? previousMessage = null)
     {
         DateTime dateTime = DateTime.Parse(lineText.Substring(0, Constants.UtcTimeStampLength));
+        DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
         string message = lineText.Substring(Constants.UtcTimeStampLength + 1).TrimEnd();
 
         if (message.StartsWith(Constants.RaffleEntryIndicator, StringComparison.Ordinal))
