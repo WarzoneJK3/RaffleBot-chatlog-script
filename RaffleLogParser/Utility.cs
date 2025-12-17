@@ -10,25 +10,25 @@ public static class Utility
         return value.Length <= count ? value : value.Substring(0, count);
     }
 
-    public static string StrToCsv(this string? value)
+    public static string ToQuotedString(this string? value)
     {
         const string DoubleQuote = "\"";
         string cleanedValue = value?.Replace(DoubleQuote, DoubleQuote + DoubleQuote) ?? "";
         return DoubleQuote + cleanedValue + DoubleQuote;
     }
-
-    public static string ObjToCsv(this object? value)
+    
+    public static string ToQuotedString(this object? value)
     {
         if (value is DateTime dateTime)
         {
-            return dateTime.ToString("s").StrToCsv();
+            return dateTime.ToString("s").ToQuotedString();
         }
-
-        return (value?.ToString()).StrToCsv();
+            
+        return (value?.ToString()).ToQuotedString();
     }
 
-    public static string BuildCsvString(params object?[] values)
+    public static string BuildTsvString(params object?[] values)
     {
-        return string.Join(',', values.Select(ObjToCsv));
+        return string.Join('\t', values.Select(ToQuotedString));
     }
 }

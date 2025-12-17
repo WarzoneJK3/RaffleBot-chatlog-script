@@ -29,14 +29,12 @@ List<(string Name, double CoinsWon, double CoinsExpected, double ExcessCoins)> e
         .OrderByDescending(x => x.ExcessCoins)
         .ToList();
 
-Debugger.Break();
+//ProcessStreaksPerRaffle(true);
+//ProcessStreaksPerPlayer(true);
 
-//processStreaksPerRaffle(true);
-//processStreaksPerPlayer(true);
+parser.WriteRafflesToTsv(BinPathToFileDirectory + @"Files\Data.tsv");
 
-parser.WriteRafflesToCsv(BinPathToFileDirectory + @"Files\Data.csv");
-
-void processStreaksPerRaffle(bool exportToCsv)
+void ProcessStreaksPerRaffle(bool exportToCsv)
 {
     const int InitialStreakCount = 1;
 
@@ -75,21 +73,20 @@ void processStreaksPerRaffle(bool exportToCsv)
     if (exportToCsv)
     {
         StringBuilder sb = new StringBuilder(capacity: raffles.Count * 75);
-        sb.AppendLine("sep=,");
-        sb.AppendLine(Utility.BuildCsvString("WinnerName", "CoinPrice", "Streak", "EndTime", "IdlePrice", "HasWinner"));
+        sb.AppendLine(Utility.BuildTsvString("WinnerName", "CoinPrice", "Streak", "EndTime", "IdlePrice", "HasWinner"));
 
         for (int index = 0; index < raffles.Count; index++)
         {
             Raffle raffle = raffles[index];
             int streak = streaks[index];
-            sb.AppendLine(Utility.BuildCsvString(raffle.WinnerName, raffle.Coins, streak, raffle.EndTime, raffle.AdditionalReward, raffle.HasWinner));
+            sb.AppendLine(Utility.BuildTsvString(raffle.WinnerName, raffle.Coins, streak, raffle.EndTime, raffle.AdditionalReward, raffle.HasWinner));
         }
 
-        File.WriteAllText(BinPathToFileDirectory + @"Files\RaffleData.csv", sb.ToString());
+        File.WriteAllText(BinPathToFileDirectory + @"Files\RaffleData.tsv", sb.ToString());
     }
 }
 
-void processStreaksPerPlayer(bool exportToCsv)
+void ProcessStreaksPerPlayer(bool exportToCsv)
 {
     Dictionary<string, int> streakPerPlayer = new Dictionary<string, int>();
 
@@ -127,15 +124,14 @@ void processStreaksPerPlayer(bool exportToCsv)
     if (exportToCsv)
     {
         StringBuilder sb = new StringBuilder(capacity: raffles.Count * 75);
-        sb.AppendLine("sep=,");
-        sb.AppendLine(Utility.BuildCsvString("Player", "Streak", "RafflesWon", "RafflesJoined", "ExpectedRafflesWon", "CoinsWon", "ExpectedCoinsWon"));
+        sb.AppendLine(Utility.BuildTsvString("Player", "Streak", "RafflesWon", "RafflesJoined", "ExpectedRafflesWon", "CoinsWon", "ExpectedCoinsWon"));
 
         foreach ((string playerName, Player player) in Player.Players)
         {
             int streak = streakPerPlayer[playerName];
-            sb.AppendLine(Utility.BuildCsvString(playerName, streak, player.RafflesWon, player.RafflesJoined, player.RafflesWonExpected, player.CoinsWon, player.CoinsExpected));
+            sb.AppendLine(Utility.BuildTsvString(playerName, streak, player.RafflesWon, player.RafflesJoined, player.RafflesWonExpected, player.CoinsWon, player.CoinsExpected));
         }
 
-        File.WriteAllText(BinPathToFileDirectory + @"Files\PlayerData.csv", sb.ToString());
+        File.WriteAllText(BinPathToFileDirectory + @"Files\PlayerData.tsv", sb.ToString());
     }
 }

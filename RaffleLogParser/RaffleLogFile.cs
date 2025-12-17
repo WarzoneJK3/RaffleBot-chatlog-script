@@ -81,15 +81,14 @@ public class RaffleLogFile
         return Raffles.Where(r => r.EndTime >= afterDateTime && r.EndTime <= beforeDateTime);
     }
 
-    public void WriteRafflesToCsv(string filePath)
+    public void WriteRafflesToTsv(string filePath)
     {
         StringBuilder sb = new StringBuilder(Raffles.Count * 200);
-        sb.AppendLine("sep=,");
-        sb.AppendLine("Coins,AdditionalReward,Variety,StartTime,HasEnded,HasWinner,EndTime,NextRaffleVariety,WinnerName,WasSniped,Fact,NumberOfPlayers,NumberOfPlayersJoined,NumberOfPlayersFailed,Duration,WinChancePerJoinedPlayer");
+        sb.AppendLine(Utility.BuildTsvString("Coins", "AdditionalReward", "Variety", "StartTime", "HasEnded", "HasWinner", "EndTime", "NextRaffleVariety", "WinnerName", "WasSniped", "Fact", "NumberOfPlayers", "NumberOfPlayersJoined", "NumberOfPlayersFailed", "Duration", "WinChancePerJoinedPlayer"));
         
         foreach (Raffle r in Raffles) 
         {
-            sb.AppendLine(Utility.BuildCsvString(r.Coins, r.AdditionalReward, r.Variety, r.StartTime, r.HasEnded, r.HasWinner, r.EndTime, r.NextRaffleVariety, r.WinnerName, r.WasSniped, r.NumberOfPlayers, r.NumberOfPlayersJoined, r.NumberOfPlayersFailed, r.Duration, r.WinChancePerJoinedPlayer));
+            sb.AppendLine(Utility.BuildTsvString(r.Coins, r.AdditionalReward, r.Variety, r.StartTime, r.HasEnded, r.HasWinner, r.EndTime, r.NextRaffleVariety, r.WinnerName, r.WasSniped, r.Fact, r.NumberOfPlayers, r.NumberOfPlayersJoined, r.NumberOfPlayersFailed, r.Duration, r.WinChancePerJoinedPlayer));
         }
 
         File.WriteAllText(filePath, sb.ToString());
