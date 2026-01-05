@@ -6,6 +6,8 @@ namespace RaffleLogParser;
 
 public class RaffleMessage
 {
+    private const DateTimeStyles UtcTimeStyle = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal;
+
     protected RaffleMessage(DateTime timeStamp, string message)
     {
         TimeStamp = timeStamp;
@@ -17,7 +19,7 @@ public class RaffleMessage
 
     public static RaffleMessage ParseLine(string lineText, RaffleMessage? previousMessage = null)
     {
-        DateTime dateTime = DateTime.Parse(lineText.AsSpan(0, Constants.UtcTimeStampLength), null, DateTimeStyles.AssumeUniversal);
+        DateTime dateTime = DateTime.Parse(lineText.AsSpan(0, Constants.UtcTimeStampLength), null, UtcTimeStyle);
         string message = lineText.Substring(Constants.UtcTimeStampLength + 1).TrimEnd();
 
         if (message.StartsWith(Constants.RaffleEntryIndicator, StringComparison.Ordinal))

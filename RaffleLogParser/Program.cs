@@ -29,8 +29,8 @@ List<(string Name, double CoinsWon, double CoinsExpected, double ExcessCoins)> e
         .OrderByDescending(x => x.ExcessCoins)
         .ToList();
 
-//ProcessStreaksPerRaffle(true);
-//ProcessStreaksPerPlayer(true);
+ProcessStreaksPerRaffle(true);
+ProcessStreaksPerPlayer(true);
 
 parser.WriteRafflesToTsv(BinPathToFileDirectory + @"Files\Data.tsv");
 
