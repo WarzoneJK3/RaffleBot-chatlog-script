@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using RaffleLogParser.Enums;
 
 namespace RaffleLogParser;
@@ -16,8 +17,7 @@ public class RaffleMessage
 
     public static RaffleMessage ParseLine(string lineText, RaffleMessage? previousMessage = null)
     {
-        DateTime dateTime = DateTime.Parse(lineText.Substring(0, Constants.UtcTimeStampLength));
-        DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+        DateTime dateTime = DateTime.Parse(lineText.AsSpan(0, Constants.UtcTimeStampLength), null, DateTimeStyles.AssumeUniversal);
         string message = lineText.Substring(Constants.UtcTimeStampLength + 1).TrimEnd();
 
         if (message.StartsWith(Constants.RaffleEntryIndicator, StringComparison.Ordinal))
@@ -34,18 +34,19 @@ public class RaffleMessage
         {
             return new RaffleEndMessage(dateTime, message);
         }
-        
+
         if (message.StartsWith(Constants.RaffleFactIndicator, StringComparison.Ordinal))
         {
             return new RaffleFactMessage(dateTime, message);
         }
 
-        if (previousMessage is RaffleFactMessage factMessage && !message.Contains(Constants.CommentIndicator))
+        // Some Raffle facts are so long they overflow into a second message
+        if (previousMessage is RaffleFactMessage factMessage)
         {
             return new RaffleFactExtensionMessage(dateTime, message, factMessage);
         }
 
-        throw new InvalidCastException($"Cannot convert \"{message}\" into a known message type");
+        throw new FormatException($"Cannot convert \"{message}\" into a known message type");
     }
 
     protected static AdditionalRewardType ParseAdditionalReward(string message)
@@ -53,80 +54,49 @@ public class RaffleMessage
         const string AndAText = "and a ";
 
         int indexOfAndA = message.IndexOf(AndAText, StringComparison.Ordinal);
-        if (indexOfAndA > 0)
+
+        if (indexOfAndA < 0)
         {
-            string reward = message.Substring(indexOfAndA + AndAText.Length);
-
-            if (reward.StartsWith(Constants.FogBuster, StringComparison.Ordinal))
-            {
-                return AdditionalRewardType.FogBusterPower;
-            }
-
-            if (reward.StartsWith(Constants.FreeCache, StringComparison.Ordinal))
-            {
-                return AdditionalRewardType.FreeCachePower;
-            }
-            
-            if (reward.StartsWith(Constants.InspireMercenaries, StringComparison.Ordinal))
-            {
-                return AdditionalRewardType.InspireMercenariesPower;
-            }
-            
-            if (reward.StartsWith(Constants.MarketRaid, StringComparison.Ordinal))
-            {
-                return AdditionalRewardType.MarketRaidPower;
-            }
-
-            if (reward.StartsWith(Constants.PoorArtifact, StringComparison.Ordinal))
-            {
-                return AdditionalRewardType.PoorArtifact;
-            }
-
-            if (reward.StartsWith(Constants.SuperChargeArmyCamp, StringComparison.Ordinal))
-            {
-                return AdditionalRewardType.SuperChargeArmyCampPower;
-            }
-
-            if (reward.StartsWith(Constants.SuperChargeMine, StringComparison.Ordinal))
-            {
-                return AdditionalRewardType.SuperchargeMinePower;
-            }
-
-            if (reward.StartsWith(Constants.TimeWarp, StringComparison.Ordinal))
-            {
-                return AdditionalRewardType.TimeWarpPower;
-            }
-
-            throw new InvalidCastException($"Cannot detect a known reward in \"{reward}\"");
+            return AdditionalRewardType.None;
         }
 
-        return AdditionalRewardType.None;
+        ReadOnlySpan<char> trimmedMessage = message.AsSpan(indexOfAndA + AndAText.Length);
+
+        foreach ((string rewardText, AdditionalRewardType rewardType) in AdditionalRewardTypes)
+        {
+            if (trimmedMessage.StartsWith(rewardText, StringComparison.Ordinal))
+            {
+                return rewardType;
+            }
+        }
+
+        throw new FormatException($"Cannot detect a known reward in \"{message}\"");
     }
 
-    protected RaffleVariety ParseRaffleVariety(string message)
+    protected RaffleVariety ParseRaffleVariety(string message, string expectedEndOfMessage)
     {
-        if (message.Contains(Constants.Raffle, StringComparison.Ordinal))
+        ReadOnlySpan<char> trimmedMessage = message.AsSpan(0, message.Length - expectedEndOfMessage.Length);
+        int startIndex = trimmedMessage.LastIndexOf(' ') + 1;
+
+        if (Enum.TryParse(trimmedMessage.Slice(startIndex, trimmedMessage.Length - startIndex), true, out RaffleVariety raffleVariety))
         {
-            return RaffleVariety.Raffle;
+            return raffleVariety;
         }
 
-        if (message.Contains(Constants.Waffle, StringComparison.Ordinal))
-        {
-            return RaffleVariety.Waffle;
-        }
-
-        if (message.Contains(Constants.Wafaffle, StringComparison.Ordinal))
-        {
-            return RaffleVariety.Wafaffle;
-        }
-
-        if (message.Contains(Constants.Ruthless, StringComparison.Ordinal))
-        {
-            return RaffleVariety.Ruthless;
-        }
-
-        throw new InvalidCastException($"Cannot detect a known raffle variety in \"{message}\"");
+        throw new FormatException($"Cannot detect a known raffle variety in \"{message}\"");
     }
+
+    private static readonly (string MessageText, AdditionalRewardType Type)[] AdditionalRewardTypes =
+    [
+        (Constants.FogBuster, AdditionalRewardType.FogBusterPower),
+        (Constants.FreeCache, AdditionalRewardType.FreeCachePower),
+        (Constants.InspireMercenaries, AdditionalRewardType.InspireMercenariesPower),
+        (Constants.MarketRaid, AdditionalRewardType.MarketRaidPower),
+        (Constants.PoorArtifact, AdditionalRewardType.PoorArtifact),
+        (Constants.SuperChargeArmyCamp, AdditionalRewardType.SuperChargeArmyCampPower),
+        (Constants.SuperChargeMine, AdditionalRewardType.SuperchargeMinePower),
+        (Constants.TimeWarp, AdditionalRewardType.TimeWarpPower)
+    ];
 }
 
 public class RaffleStartMessage : RaffleMessage
@@ -138,15 +108,15 @@ public class RaffleStartMessage : RaffleMessage
     public RaffleStartMessage(DateTime dateTime, string message) : base(dateTime, message)
     {
         int index = message.IndexOf(' ', StringComparison.Ordinal);
-        CoinPrice = int.Parse(message.Substring(0, index));
+        CoinPrice = int.Parse(message.AsSpan(0, index));
         AdditionalReward = ParseAdditionalReward(message);
-        RaffleVariety = ParseRaffleVariety(message);
+        RaffleVariety = ParseRaffleVariety(message, " starting!");
     }
 }
 
 public class RaffleEndMessage : RaffleMessage
 {
-    private static readonly Regex _nameAndCoinsRegex = new Regex(@"RAFFLE OVER: Congratulations to (.+) for winning (\d+) coins");
+    private static readonly Regex _nameAndCoinsRegex = new Regex(@"^RAFFLE OVER: Congratulations to (.+) for winning (\d+) coins", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public bool HasWinner { get; }
     public string Winner { get; }
@@ -168,22 +138,20 @@ public class RaffleEndMessage : RaffleMessage
 
         if (!match.Success)
         {
-            throw new InvalidCastException($"Unable to parse end of raffle from \"{message}\"");
+            throw new FormatException($"Unable to parse end of raffle from \"{message}\"");
         }
 
         Winner = match.Groups[1].Value;
         Coins = int.Parse(match.Groups[2].Value);
         AdditionalReward = ParseAdditionalReward(message);
-
-        int index = message.Substring(0, message.Length -1).LastIndexOf('!');
-        NextRaffleVariety = ParseRaffleVariety(message.Substring(index));
+        NextRaffleVariety = ParseRaffleVariety(message, "!");
     }
 }
 
 public class RaffleEntryMessage : RaffleMessage
 {
     private const string SuccessfulRaffleMessage = "OK";
-    
+
     public string PlayerName { get; }
     public bool Success { get; }
 
@@ -191,7 +159,7 @@ public class RaffleEntryMessage : RaffleMessage
     {
         int index = message.LastIndexOf(':');
         PlayerName = message.Substring(1, index - 1);
-        Success = message.Substring(index + 2).StartsWith(SuccessfulRaffleMessage);
+        Success = message.AsSpan(index + 2).StartsWith(SuccessfulRaffleMessage, StringComparison.Ordinal);
     }
 }
 
