@@ -15,7 +15,12 @@ Player playerJk3 = Player.Players["JK_3"];
 
 List<Player> luckyPlayers = Player.Players.Values.OrderByDescending(p => p.Luck).ToList();
 List<Raffle> party = raffles.Where(r => r.Duration.TotalSeconds > 60).OrderByDescending(r => r.Duration).ToList();
-List<Raffle> sniped = raffles.FindAll(r => r.WasSniped);
+List<Raffle> sniped = raffles.FindAll(r => r.IsSniped);
+List<Player> luckyPlayersFiltered = Player.Players.Values.Where(p => p.RafflesTotal > 20).OrderByDescending(p => p.Luck).ToList();
+
+Player awaythro = Player.Players["awaythro"];
+int awaythroIndex = luckyPlayers.IndexOf(awaythro);
+int awaythroIndexFiltered = luckyPlayersFiltered.IndexOf(awaythro);
 
 List<(string Name, double CoinsWon, double CoinsExpected, double ExcessCoins)> excessCoins =
     Player.Players.Where(p => p.Value.RafflesJoined > 450)

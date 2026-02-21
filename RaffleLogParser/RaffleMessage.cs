@@ -75,7 +75,7 @@ public class RaffleMessage
         throw new FormatException($"Cannot detect a known reward in \"{message}\"");
     }
 
-    protected RaffleVariety ParseRaffleVariety(string message, string expectedEndOfMessage)
+    protected static RaffleVariety ParseRaffleVariety(string message, string expectedEndOfMessage)
     {
         ReadOnlySpan<char> trimmedMessage = message.AsSpan(0, message.Length - expectedEndOfMessage.Length);
         int startIndex = trimmedMessage.LastIndexOf(' ') + 1;

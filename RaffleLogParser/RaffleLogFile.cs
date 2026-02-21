@@ -88,7 +88,7 @@ public class RaffleLogFile
         
         foreach (Raffle r in Raffles) 
         {
-            sb.AppendLine(Utility.BuildTsvString(r.Coins, r.AdditionalReward, r.Variety, r.StartTime, r.HasEnded, r.HasWinner, r.EndTime, r.NextRaffleVariety, r.WinnerName, r.WasSniped, r.Fact, r.NumberOfPlayers, r.NumberOfPlayersJoined, r.NumberOfPlayersFailed, r.Duration, r.WinChancePerJoinedPlayer));
+            sb.AppendLine(Utility.BuildTsvString(r.Coins, r.AdditionalReward, r.Variety, r.StartTime, r.HasEnded, r.HasWinner, r.EndTime, r.NextRaffleVariety, r.WinnerName, r.IsSniped, r.Fact, r.NumberOfPlayers, r.NumberOfPlayersJoined, r.NumberOfPlayersFailed, r.Duration, r.WinChancePerJoinedPlayer));
         }
 
         File.WriteAllText(filePath, sb.ToString());

@@ -1,5 +1,5 @@
 ﻿using RaffleLogParser.Enums;
-using System.Reflection.Metadata;
+using System.Diagnostics;
 
 namespace RaffleLogParser;
 
@@ -18,7 +18,7 @@ public class Raffle
     public DateTime EndTime { get; private set; }
     public RaffleVariety? NextRaffleVariety { get; private set; }
     public string? WinnerName { get; private set; }
-    public bool WasSniped { get; private set; }
+    public bool IsSniped { get; private set; }
     
     public string? Fact { get; private set; }
 
@@ -62,6 +62,11 @@ public class Raffle
 
     public void AddEnd(RaffleEndMessage endMessage)
     {
+        if (HasEnded)
+        {
+            throw new InvalidOperationException("Cannot add ending to an already finished raffle");
+        }
+
         HasWinner = endMessage.HasWinner;
 
         if (HasWinner && Coins != endMessage.Coins)
@@ -85,6 +90,11 @@ public class Raffle
             throw new InvalidOperationException("Cannot add facts to an unfinished raffle");
         }
 
+        if (Fact != null)
+        {
+            throw new InvalidOperationException("Cannot add multiple facts to the same raffle");
+        }
+
         Fact = factMessage.Fact;
     }
 
@@ -105,12 +115,12 @@ public class Raffle
 
     private void UpdateEntryBasedProperties()
     {
-        List<RaffleEntryMessage> players = Entries.DistinctBy(e => e.PlayerName).ToList();
-        PlayerNames = players.Select(p => p.PlayerName).ToList();
-        NumberOfPlayers = players.Count;
-        NumberOfPlayersFailed = players.Count(x => !x.Success);
-        NumberOfPlayersJoined = players.Count(x => x.Success);
+        List<RaffleEntryMessage> entries = Entries.DistinctBy(e => e.PlayerName).ToList();
+        PlayerNames = entries.Select(p => p.PlayerName).ToList();
+        NumberOfPlayers = entries.Count;
+        NumberOfPlayersFailed = entries.Count(x => !x.Success);
+        NumberOfPlayersJoined = entries.Count(x => x.Success);
         WinChancePerJoinedPlayer = 1.0 / NumberOfPlayersJoined;
-        WasSniped = HasWinner && players.All(p => EndTime - p.TimeStamp <= SnipedTimeSpan);
+        IsSniped = HasWinner && entries.All(e => EndTime - e.TimeStamp <= SnipedTimeSpan);
     }
 }
