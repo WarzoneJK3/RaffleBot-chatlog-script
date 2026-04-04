@@ -12,23 +12,19 @@ public class Raffle
     public AdditionalRewardType AdditionalReward { get; }
     public RaffleVariety Variety { get; }
     public DateTime StartTime { get; }
-
+    public DateTime EndTime { get; private set; }
+    public TimeSpan Duration => HasEnded ? EndTime - StartTime : TimeSpan.Zero;
+    public RaffleVariety? NextRaffleVariety { get; private set; }
     public bool HasEnded { get; private set; }
     public bool HasWinner { get; private set; }
-    public DateTime EndTime { get; private set; }
-    public RaffleVariety? NextRaffleVariety { get; private set; }
     public string? WinnerName { get; private set; }
-    public bool IsSniped { get; private set; }
-    
     public string? Fact { get; private set; }
-
-    
+    public bool IsSniped { get; private set; }
+    public List<string>? PlayerNames { get; private set; }
     public int NumberOfPlayers { get; private set; }
     public int NumberOfPlayersJoined { get; private set; }
-    public int NumberOfPlayersFailed { get; private set; }
-    public TimeSpan Duration { get; private set; }
-    public List<string>? PlayerNames { get; private set; }
-    public double WinChancePerJoinedPlayer { get; private set; }
+    public int NumberOfPlayersFailed => NumberOfPlayers - NumberOfPlayersJoined;
+    public double WinChancePerJoinedPlayer => 1.0 / NumberOfPlayersJoined;
     
     public Raffle(int coins, AdditionalRewardType additionalReward, RaffleVariety variety, DateTime startTime)
     {
@@ -78,7 +74,6 @@ public class Raffle
         EndTime = endMessage.TimeStamp;
         WinnerName = endMessage.Winner.TakeFirst(Constants.MaxLengthPlayerNameInRaffleMessage);
 
-        Duration = EndTime - StartTime;
         UpdateEntryBasedProperties();
         HasEnded = true;
     }
@@ -118,9 +113,7 @@ public class Raffle
         List<RaffleEntryMessage> entries = Entries.DistinctBy(e => e.PlayerName).ToList();
         PlayerNames = entries.Select(p => p.PlayerName).ToList();
         NumberOfPlayers = entries.Count;
-        NumberOfPlayersFailed = entries.Count(x => !x.Success);
         NumberOfPlayersJoined = entries.Count(x => x.Success);
-        WinChancePerJoinedPlayer = 1.0 / NumberOfPlayersJoined;
         IsSniped = HasWinner && entries.All(e => EndTime - e.TimeStamp <= SnipedTimeSpan);
     }
 }

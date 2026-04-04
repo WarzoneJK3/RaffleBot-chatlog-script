@@ -10,12 +10,12 @@ public class Player
     public int RafflesTotal => Raffles.Count;
     public int RafflesWon { get; private set; }
     public int RafflesJoined { get; private set; }
-    public int RafflesLost { get; private set; }
+    public int RafflesLost => RafflesJoined - RafflesWon;
+    public int RafflesFailedToJoin => RafflesTotal - RafflesJoined;
     public double RafflesWonExpected { get; private set; }
     public double WinLuck => RafflesWon / RafflesWonExpected;
     public int CoinsWon { get; private set; }
     public double CoinsExpected { get; private set; }
-
     public double CoinLuck => CoinsWon / CoinsExpected;
     public double Luck => WinLuck - 1;
 
@@ -56,10 +56,6 @@ public class Player
             {
                 RafflesWon++;
                 CoinsWon += raffle.Coins;
-            }
-            else
-            {
-                RafflesLost++;
             }
         }
     }
