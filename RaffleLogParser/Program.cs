@@ -9,30 +9,10 @@ RaffleLogFile parser = new RaffleLogFile(BinPathToFileDirectory + "RaffleBot cha
 //List<Raffle> raffles = parser.GetRaffles(new DateTime(0)).ToList();
 List<Raffle> raffles = parser.Raffles;
 
-int wonRaffles = raffles.Count(r => r.HasWinner);
 
-Player playerJk3 = Player.Players["JK_3"];
 
-List<Player> luckyPlayers = Player.Players.Values.OrderByDescending(p => p.Luck).ToList();
-List<Raffle> party = raffles.Where(r => r.Duration.TotalSeconds > 60).OrderByDescending(r => r.Duration).ToList();
-List<Raffle> sniped = raffles.FindAll(r => r.IsSniped);
-List<Player> luckyPlayersFiltered = Player.Players.Values.Where(p => p.RafflesTotal > 20).OrderByDescending(p => p.Luck).ToList();
 
-Player awaythro = Player.Players["awaythro"];
-int awaythroIndex = luckyPlayers.IndexOf(awaythro);
-int awaythroIndexFiltered = luckyPlayersFiltered.IndexOf(awaythro);
 
-List<(string Name, double CoinsWon, double CoinsExpected, double ExcessCoins)> excessCoins =
-    Player.Players.Where(p => p.Value.RafflesJoined > 450)
-        .Select(p =>
-        {
-            Player player = p.Value;
-            double won = player.CoinsWon;
-            double expected = player.CoinsExpected;
-            return (Name: p.Key, CoinsWon: won, CoinsExpected: expected, ExcessCoins: won - expected);
-        })
-        .OrderByDescending(x => x.ExcessCoins)
-        .ToList();
 
 ProcessStreaksPerRaffle(true);
 ProcessStreaksPerPlayer(true);

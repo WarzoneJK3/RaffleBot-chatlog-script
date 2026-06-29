@@ -105,7 +105,7 @@ public class Raffle
             throw new InvalidOperationException("Cannot add fact extension to a raffle without a fact");
         }
 
-        Fact = factExtensionMessage.FullFactMessage;
+        Fact = factExtensionMessage.FullFact;
     }
 
     private void UpdateEntryBasedProperties()

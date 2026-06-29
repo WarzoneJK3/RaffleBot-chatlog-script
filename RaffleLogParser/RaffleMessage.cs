@@ -88,7 +88,7 @@ public class RaffleMessage
         throw new FormatException($"Cannot detect a known raffle variety in \"{message}\"");
     }
 
-    private static string GetRaffleFactIndicatorByTime(DateTime dateTime)
+    protected static string GetRaffleFactIndicatorByTime(DateTime dateTime)
     {
         return dateTime < Constants.WarAppStartDate ? Constants.WarzoneFactIndicator : Constants.WarAppFactIndicator;
     }
@@ -176,14 +176,15 @@ public class RaffleFactMessage : RaffleMessage
 
     public RaffleFactMessage(DateTime dateTime, string message) : base(dateTime, message)
     {
-        Fact = message.Substring(Constants.WarzoneFactIndicator.Length);
+        int prefixLength = GetRaffleFactIndicatorByTime(dateTime).Length;
+        Fact = message.Substring(prefixLength);
     }
 }
 
 public class RaffleFactExtensionMessage : RaffleMessage
 {
     public RaffleFactMessage RaffleFactMessage { get; }
-    public string FullFactMessage => RaffleFactMessage.Message + ' ' + Message;
+    public string FullFact => RaffleFactMessage.Fact + ' ' + Message;
 
     public RaffleFactExtensionMessage(DateTime dateTime, string message, RaffleFactMessage factMessage) : base(dateTime, message)
     {

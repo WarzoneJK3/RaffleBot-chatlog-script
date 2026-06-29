@@ -8,8 +8,8 @@ public static class Constants
     public const string RaffleStartIndicator = "affle starting!";
     public const string RaffleEntryIndicator = "@";
     public const string RaffleEndIndicator = "RAFFLE OVER:";
-    public const string WarzoneFactIndicator = "Warzone Fact:";
-    public const string WarAppFactIndicator = "War.app Fact:";
+    public const string WarzoneFactIndicator = "Warzone Fact: ";
+    public const string WarAppFactIndicator = "War.app Fact: ";
 
     public readonly static DateTime WarAppStartDate = new DateTime(2026, 4, 17, 13, 0, 0, DateTimeKind.Utc);
 
